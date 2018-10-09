@@ -1,0 +1,13 @@
+ACR_NAME="acrdemoev"
+ACR_LOC="eastus"
+ACR_SKU="Standard"
+ACR_RG="base-demo-acr-rg"
+az group create --location $ACR_LOC --name $ACR_RG
+
+az acr create -n $ACR_NAME -g $ACR_RG -l $ACR_LOC --sku $ACR_SKU --admin-enabled true
+
+ACR_PWD=`az acr credential show -n $ACR_NAME -g $ACR_RG --query "passwords[0].value" -o tsv`
+
+echo $ACR_PWD
+
+kubectl create secret docker-registry acr-auth --docker-server $ACR_NAME.azurecr.io --docker-username $ACR_NAME --docker-password $ACR_PWD --docker-email ignore@dummy.com

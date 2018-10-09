@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: data-api-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app: data-api
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
