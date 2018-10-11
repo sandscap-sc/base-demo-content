@@ -1,4 +1,7 @@
-cd ~/github.com/smilr
+ACR_NAME="acrdemoev"
+ACR_LOC="eastus"
+ACR_SKU="Standard"
+ACR_RG="base-demo-acr-rg"
 
 az acr build --registry $ACR_NAME -g $ACR_RG --file node/data-api/Dockerfile --image smilr/data-api https://github.com/evillgenius75/smilr.git
 

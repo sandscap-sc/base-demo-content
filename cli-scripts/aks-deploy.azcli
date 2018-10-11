@@ -1,9 +1,16 @@
-az group create --location "eastus" --name "base-demo-aks-rg"
+AKS_LOC=eastus
+AKS_NAME="akddemoev-"$AKS_LOC
+AKS_RG="demorg-"$AKS_NAME
+AKS_SKU="Standard_D2s_v3"
+AKS_COUNT=3
+AKS_K8SV=1.10.8
 
-az aks get-versions --location "eastus" -o table
+az group create --location $AKS_LOC --name $AKS_RG
 
-az vm list-sizes --location "eastus" -o table
+az aks get-versions --location $AKS_LOC -o table
 
-az aks create --name "base-demo-aks" --resource-group "base-demo-aks-rg" --dns-name-prefix "basedemoaks" --kubernetes-version 1.10.8 --node-count 3 --node-vm-size "Standard_D2s_v3"
+az vm list-sizes --location $AKS_LOC -o table
 
-az aks get-credentials -n base-demo-aks -g base-demo-aks-rg
+az aks create --name $AKS_NAME --resource-group $AKS_RG --dns-name-prefix $AKS_NAME --kubernetes-version $AKS_K8SV --node-count $AKS_COUNT --node-vm-size $AKS_SKU --disable-rbac 
+
+az aks get-credentials -n $AKS_NAME -g $AKS_RG
