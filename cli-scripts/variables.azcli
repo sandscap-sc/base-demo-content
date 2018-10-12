@@ -1,0 +1,10 @@
+ACR_NAME="acrdemoev"
+ACR_LOC="eastus"
+ACR_SKU="Standard"
+ACR_RG="base-demo-acr-rg"
+AKS_LOC=westus
+AKS_NAME="akddemoev-"$AKS_LOC
+AKS_RG="demorg-"$AKS_NAME
+AKS_SKU="Standard_D2s_v3"
+AKS_COUNT=3
+AKS_K8SV=1.10.8

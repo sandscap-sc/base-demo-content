@@ -1,7 +1,4 @@
-ACR_NAME="acrdemoev"
-ACR_LOC="eastus"
-ACR_SKU="Standard"
-ACR_RG="base-demo-acr-rg"
+#Run variables.azcli first
 az group create --location $ACR_LOC --name $ACR_RG
 
 az acr create -n $ACR_NAME -g $ACR_RG -l $ACR_LOC --sku $ACR_SKU --admin-enabled true

@@ -1,9 +1,4 @@
-AKS_LOC=eastus
-AKS_NAME="akddemoev-"$AKS_LOC
-AKS_RG="demorg-"$AKS_NAME
-AKS_SKU="Standard_D2s_v3"
-AKS_COUNT=3
-AKS_K8SV=1.10.8
+#RUN variables.azcli FIRST
 
 az group create --location $AKS_LOC --name $AKS_RG
 
