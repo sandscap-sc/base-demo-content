@@ -1,0 +1,5 @@
+#Run this Helm command from the directory with your updates values.yaml
+helm install --name nginx-ic-external stable/nginx-ingress --values ./values.yaml
+
+helm install stable/cert-manager --set ingressShim.defaultIssuerName=letsencrypt-staging --set ingressShim.defaultIssuerKind=ClusterIssuer
+
