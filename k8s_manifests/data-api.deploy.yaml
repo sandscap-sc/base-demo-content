@@ -19,6 +19,9 @@ spec:
         - containerPort: 4000
         env:
         - name: MONGO_CONNSTR
-          value: mongodb://mongodb-svc.default.svc.cluster.local
+          valueFrom:
+            secretKeyRef:
+              name: cosmodb-secret
+              key: connstr
       imagePullSecrets:
         - name: acr-auth
