@@ -15,6 +15,7 @@ spec:
       containers:
       - name: frontend-pod
         image: acrdemoev.azurecr.io/smilr/frontend
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:
