@@ -20,6 +20,6 @@ spec:
         - containerPort: 3000
         env:
           - name: API_ENDPOINT
-            value: http://104.211.23.211/api
+            value: https://akseast.evillgenius.com/api
       imagePullSecrets:
         - name: acr-auth
