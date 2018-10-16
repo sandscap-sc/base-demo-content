@@ -1,0 +1,23 @@
+#
+# This file might sound important but...
+# It is only used by the hosting on GitHub Pages, it has no other importance to the Smilr project
+#
+
+title: "Smilr: Microservices Reference App"
+remote_theme: benc-uk/theme-msdark
+favicon: /angular/src/assets/img/logo.png
+plugins:
+  - jemoji
+buttons:
+  - b0:
+    text: Main Guide
+    href: /
+  - b1:
+    text: Docker
+    href: /docs/containers
+  - b2:
+    text: Kubernetes
+    href: /kubernetes
+  - b3:
+    text: Azure Templates
+    href: /azure/templates

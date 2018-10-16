@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "acrName": {
+      "value": "myACR"
+    },
+    "acrPassword": {
+      "value": "change-me"
+    },
+    "dnsPrefix": {
+      "value": "make-me-unique"
+    },
+    "dataApiImageTag": {
+      "value": "latest"
+    },    
+    "frontendImageTag": {
+      "value": "latest"
+    },
+    "releaseInfo": {
+      "value": "Manual ARM template release"
+    }
+  }
+}

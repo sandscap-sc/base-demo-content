@@ -1,0 +1,200 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "acrName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of ACR instance holding your images"
+      }
+    },
+    "acrPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Password for ACR"
+      }
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "defaultValue": "smilr",
+      "metadata": {
+        "description": "Prefix for container DNS labels, change to ensure global DNS uniqueness"
+      }      
+    },
+    "dataApiImageTag": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Image tag of the Data API, e.g. latest or specific tag"
+      }       
+    },
+    "frontendImageTag": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Image tag of the Frontend, e.g. latest or specific tag"
+      }       
+    },    
+    "releaseInfo": {
+      "type": "string",
+      "defaultValue": "Not set",
+      "metadata": {
+        "description": "String description of this release, normally used with Azure DevOps"
+      }       
+    }     
+  },
+  "variables": {
+    "containerFrontend": "smilr-frontend",
+    "containerDataApi": "smilr-data-api",
+    "imageFrontend": "[concat(parameters('acrName'), '.azurecr.io/smilr/frontend:', parameters('frontendImageTag'))]",
+    "imageDataApi": "[concat(parameters('acrName'), '.azurecr.io/smilr/data-api:', parameters('dataApiImageTag'))]",
+    "cosmosName": "[concat('cosmos-', uniqueString(resourceGroup().id))]",
+    "memory": 1.0,
+    "cpu": 1.0,
+    "dnsLabelFrontend": "[concat(parameters('dnsPrefix'), '-frontend')]",
+    "dnsLabelDataApi": "[concat(parameters('dnsPrefix'), '-api')]"
+  },
+  "resources": [
+    {
+      "name": "[variables('cosmosName')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2015-04-08",
+      "location": "[resourceGroup().location]",
+      "kind": "MongoDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "name": "[variables('cosmosName')]"
+      }
+    },
+    {
+      "name": "[variables('containerDataApi')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerDataApi')]",
+            "properties": {
+              "image": "[variables('imageDataApi')]",
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpu')]",
+                  "memoryInGB": "[variables('memory')]"
+                }
+              },
+              "environmentVariables": [
+                {
+                  "name": "MONGO_CONNSTR",
+                  "value": "[listConnectionStrings(variables('cosmosName'), '2015-04-08').connectionStrings[0].connectionString]"
+                },
+                {
+                  "name": "PORT",
+                  "value": "80"
+                },
+                {
+                  "name": "RELEASE_INFO",
+                  "value": "[parameters('releaseInfo')]"
+                }                       
+              ]
+            }
+          }
+        ],
+        "imageRegistryCredentials": [{
+          "server": "[concat(parameters('acrName'), '.azurecr.io')]",
+          "username": "[parameters('acrName')]",
+          "password": "[parameters('acrPassword')]"
+        }],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 80
+            }
+          ],
+          "dnsNameLabel": "[variables('dnsLabelDataApi')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosName'))]"
+      ]
+    },
+    {
+      "name": "[variables('containerFrontend')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerFrontend')]",
+            "properties": {
+              "image": "[variables('imageFrontend')]",
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('cpu')]",
+                  "memoryInGB": "[variables('memory')]"
+                }
+              },
+              "environmentVariables": [
+                {
+                  "name": "API_ENDPOINT",
+                  "value": "[concat('http://', variables('dnsLabelDataApi'), '.', resourceGroup().location, '.azurecontainer.io', '/api')]"
+                },
+                {
+                  "name": "PORT",
+                  "value": "80"
+                }                
+              ]
+            }
+          }
+        ],
+        "imageRegistryCredentials": [{
+          "server": "[concat(parameters('acrName'), '.azurecr.io')]",
+          "username": "[parameters('acrName')]",
+          "password": "[parameters('acrPassword')]"
+        }],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 80
+            }
+          ],
+          "dnsNameLabel": "[variables('dnsLabelFrontend')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerDataApi'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontendURL": {
+      "value": "[concat('http://', variables('dnsLabelFrontend'), '.', resourceGroup().location, '.azurecontainer.io')]",
+      "type": "string"
+    },
+    "apiURL": {
+      "value": "[concat('http://', variables('dnsLabelDataApi'), '.', resourceGroup().location, '.azurecontainer.io', '/api')]",
+      "type": "string"
+    },
+    "mongoConnStr": {
+      "value": "[listConnectionStrings(variables('cosmosName'), '2015-04-08').connectionStrings[0].connectionString]",
+      "type": "string"
+    }   
+  }
+}
