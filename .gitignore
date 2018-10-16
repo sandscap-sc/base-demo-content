@@ -1,1 +1,3 @@
 *.secret.*.yaml
+*.DS_Store*
+smilr/.DS_Store
