@@ -1,0 +1,26 @@
+# This file contains the essential configs for the ingress controller helm chart
+
+################################################################################
+# Specify which application gateway the ingress controller will manage
+#
+appgw:
+    subscriptionId: 648dcb5a-de1e-48b2-af6b-fe6ef28d355c
+    resourceGroup: aks-ageast2-ic-rg
+    name: applicationgateway4b6a
+
+################################################################################
+# Specify which kubernetes namespace the ingress controller will watch
+# Default value is "default"
+#
+# kubernetes:
+#   watchNamespace: <namespace>
+
+################################################################################
+# Specify the authentication with Azure Resource Manager
+#
+# Two authentication methods are available:
+# - Option 1: AAD-Pod-Identity (https://github.com/Azure/aad-pod-identity)
+armAuth:
+    type: aadPodIdentity
+    identityResourceID: /subscriptions/648dcb5a-de1e-48b2-af6b-fe6ef28d355c/resourceGroups/aks-ageast2-ic-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/appgwContrIdentity4b6a
+    identityClientID:  9ec69fa2-6ff9-423e-a1f1-9166fae96c7d

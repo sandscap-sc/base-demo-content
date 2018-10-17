@@ -1,17 +1,17 @@
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
-  name: tls-secret-akseast
+  name: tls-secret-agic
 spec:
-  secretName: tls-secret-akseast
+  secretName: tls-secret-agic
   dnsNames:
-  - akseast.evillgenius.com
+  - agic.evillgenius.com
   acme:
     config:
     - http01:
-        ingressClass: nginx-external
+        ingressClass: azure/application-gateway
       domains:
-      - akseast.evillgenius.com
+      - agic.evillgenius.com
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer

@@ -1,0 +1,132 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mongodb-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb-pod
+        image: mongo:3.4-jessie
+        ports:
+        - containerPort: 27017
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: data-api-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: data-api
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: data-api
+  template:
+    metadata:
+      labels:
+        app: data-api
+    spec:
+      containers:
+      - name: data-api-pod
+        image: acrdemoev.azurecr.io/smilr/data-api
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+        env:
+        - name: MONGO_CONNSTR
+          value: mongodb://mongodb-svc.default
+      imagePullSecrets:
+        - name: acr-auth
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: frontend-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend-pod
+        image: acrdemoev.azurecr.io/smilr/frontend
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+          - name: API_ENDPOINT
+            value: https://agic.evillgenius.com/api
+      imagePullSecrets:
+        - name: acr-auth
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: smilr-ingress
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+spec:
+  tls:
+  - hosts:
+    - agic.evillgenius.com
+    secretName: tls-secret-agic
+  rules:
+  - host: agic.evillgenius.com
+    http:
+      paths:
+      - path: /api/*
+        backend:
+          serviceName: data-api-svc
+          servicePort: 80
+      - backend:
+          serviceName: frontend-svc
+          servicePort: 80
