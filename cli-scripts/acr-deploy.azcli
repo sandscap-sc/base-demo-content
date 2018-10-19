@@ -8,3 +8,5 @@ ACR_PWD=`az acr credential show -n $ACR_NAME -g $ACR_RG --query "passwords[0].va
 echo $ACR_PWD
 
 kubectl create secret docker-registry acr-auth --docker-server $ACR_NAME.azurecr.io --docker-username $ACR_NAME --docker-password $ACR_PWD --docker-email ignore@dummy.com
+
+docker login -u $ACR_NAME -p $ACR_PWD $ACR_NAME.azurecr.io

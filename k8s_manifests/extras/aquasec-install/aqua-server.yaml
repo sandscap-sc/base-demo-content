@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aqua-db
+  labels:
+    app: aqua-db
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: aqua-db
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: aqua-db
+spec:
+  template:
+    metadata:
+      labels:
+        app: aqua-db
+      name: aqua-db
+    spec:
+      serviceAccount: aqua
+      containers:
+      - name: aqua-db
+        image: aquasec/database:3.2
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: aqua-db
+                key: password
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: postgres-db
+        ports:
+        - containerPort: 5432
+      volumes:
+        - name: postgres-db
+          hostPath:
+            path: /var/lib/aqua/db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aqua-gateway
+  labels:
+    app: aqua-gateway
+spec:
+  ports:
+    - port: 3622
+  selector:
+    app: aqua-gateway
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: aqua-gateway
+spec:
+  template:
+    metadata:
+      labels:
+        app: aqua-gateway
+      name: aqua-gateway
+    spec:
+      serviceAccount: aqua      
+      containers:
+      - name: aqua-gateway
+        image: aquasec/gateway:3.2
+        env:
+          - name: SCALOCK_GATEWAY_PUBLIC_IP
+            value: aqua-gateway
+          - name: SCALOCK_DBUSER
+            value: "postgres"
+          - name: SCALOCK_DBPASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: aqua-db
+                key: password
+          - name: SCALOCK_DBNAME
+            value: "scalock"
+          - name: SCALOCK_DBHOST
+            value: aqua-db
+          - name: SCALOCK_DBPORT
+            value: "5432"
+          - name: SCALOCK_AUDIT_DBUSER
+            value: "postgres"
+          - name: SCALOCK_AUDIT_DBPASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: aqua-db
+                key: password
+          - name: SCALOCK_AUDIT_DBNAME
+            value: "slk_audit"
+          - name: SCALOCK_AUDIT_DBHOST
+            value: aqua-db
+          - name: SCALOCK_AUDIT_DBPORT
+            value: "5432"
+        ports:
+        - containerPort: 3622
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aqua-web
+  labels:
+    app: aqua-web
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 8443
+      name: aqua-web-ssl
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+      name: aqua-web
+  selector:
+    app: aqua-web
+  type: LoadBalancer   
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: aqua-web
+spec:
+  template:
+    metadata:
+      labels:
+        app: aqua-web
+      name: aqua-web
+    spec:
+      serviceAccount: aqua            
+      containers:
+      - name: aqua-web
+        image: aquasec/server:3.2
+        env:
+          - name: SCALOCK_DBUSER
+            value: "postgres"
+          - name: SCALOCK_DBPASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: aqua-db
+                key: password
+          - name: SCALOCK_DBNAME
+            value: "scalock"
+          - name: SCALOCK_DBHOST
+            value: aqua-db
+          - name: SCALOCK_DBPORT
+            value: "5432"
+          - name: SCALOCK_AUDIT_DBUSER
+            value: "postgres"
+          - name: SCALOCK_AUDIT_DBPASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: aqua-db
+                key: password
+          - name: SCALOCK_AUDIT_DBNAME
+            value: "slk_audit"
+          - name: SCALOCK_AUDIT_DBHOST
+            value: aqua-db
+          - name: SCALOCK_AUDIT_DBPORT
+            value: "5432"
+        volumeMounts:
+          - mountPath: /var/run/docker.sock
+            name: docker-socket-mount
+        ports:
+        - containerPort: 8080
+      volumes:
+        - name: docker-socket-mount
+          hostPath:
+            path: /var/run/docker.sock
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: smilr-ingress
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+spec:
+  tls:
+  - hosts:
+    - agic.evillgenius.com
+    secretName: tls-secret-agic
+  rules:
+  - host: agic.evillgenius.com
+    http:
+      paths:
+      # - path: /aqua
+      #   backend:
+      #     serviceName: aqua-web
+      #     servicePort: 80
+      # - path: /api/*
+      #   backend:
+      #     serviceName: data-api-svc
+      #     servicePort: 80
+      - backend:
+          serviceName: aqua-web
+          servicePort: 80
